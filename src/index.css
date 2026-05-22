@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .btn {
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+  }
+  .btn-ghost {
+    @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50;
+  }
+  .btn-yellow {
+    @apply btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200;
+  }
+  .btn-blue {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700;
+  }
+  .btn-indigo {
+    @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+  }
+  .btn-purple {
+    @apply btn bg-purple-600 text-white hover:bg-purple-700;
+  }
+  .btn-orange {
+    @apply btn bg-orange-600 text-white hover:bg-orange-700;
+  }
+  .btn-amber {
+    @apply btn bg-amber-600 text-white hover:bg-amber-700;
+  }
+  .btn-green {
+    @apply btn bg-green-600 text-white hover:bg-green-700;
+  }
+  .btn-red {
+    @apply btn bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-stone {
+    @apply btn bg-stone-200 text-stone-700 hover:bg-stone-300;
+  }
+  .input {
+    @apply border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full;
+  }
+  .label {
+    @apply block text-sm font-medium text-gray-600 mb-1;
+  }
+  .card {
+    @apply bg-white border border-gray-200 rounded-lg;
+  }
+}
