@@ -156,12 +156,14 @@ export default function ModalImportCSV({ onClose }) {
         {[1, 2, 3, 4].map(n => (
           <div key={n} className="flex items-center gap-2">
             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-              krok >= n ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+              krok >= n
+                ? 'bg-[#22D4F0] text-[#050810]'
+                : 'bg-[#141921] text-[#64748B] border border-[#1A2535]'
             }`}>{n}</div>
-            {n < 4 && <div className={`h-px w-8 ${krok > n ? 'bg-indigo-300' : 'bg-gray-200'}`} />}
+            {n < 4 && <div className={`h-px w-8 ${krok > n ? 'bg-[#22D4F0]/40' : 'bg-[#1A2535]'}`} />}
           </div>
         ))}
-        <span className="text-xs text-gray-400 ml-2">
+        <span className="text-[10px] text-[#64748B] ml-2 uppercase tracking-[0.08em]">
           {['', 'Wgraj plik', 'Mapowanie kolumn', 'Podgląd', 'Gotowe'][krok]}
         </span>
       </div>
@@ -170,15 +172,17 @@ export default function ModalImportCSV({ onClose }) {
       {krok === 1 && (
         <div
           className={`border-2 border-dashed rounded-xl p-12 text-center transition-colors ${
-            drag ? 'border-indigo-400 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
+            drag
+              ? 'border-[#22D4F0] bg-[#091C28]'
+              : 'border-[#1A2535] hover:border-[#22D4F0]/30'
           }`}
           onDragOver={e => { e.preventDefault(); setDrag(true) }}
           onDragLeave={() => setDrag(false)}
           onDrop={e => { e.preventDefault(); setDrag(false); wczytajPlik(e.dataTransfer.files[0]) }}
         >
           <div className="text-4xl mb-3">📂</div>
-          <p className="text-gray-600 mb-2">Przeciągnij plik CSV tutaj</p>
-          <p className="text-gray-400 text-sm mb-4">lub</p>
+          <p className="text-[#64748B] text-sm mb-2">Przeciągnij plik CSV tutaj</p>
+          <p className="text-[#64748B] text-xs mb-4">lub</p>
           <button onClick={() => inputRef.current.click()} className="btn-primary">
             Wybierz plik
           </button>
@@ -189,7 +193,7 @@ export default function ModalImportCSV({ onClose }) {
             className="hidden"
             onChange={e => wczytajPlik(e.target.files[0])}
           />
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="text-[10px] text-[#64748B] mt-4">
             Obsługiwane: eksport z Outscrapera, dowolny CSV z nagłówkami
           </p>
         </div>
@@ -198,15 +202,15 @@ export default function ModalImportCSV({ onClose }) {
       {/* Krok 2 — Mapowanie */}
       {krok === 2 && csvData && (
         <div>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-[#64748B] text-xs mb-4">
             Znaleziono {csvData.headers.length} kolumn i {csvData.rows.length} wierszy.
             Przypisz kolumny CSV do pól CRM:
           </p>
           <div className="space-y-3">
             {POLA_CRM.map(({ id, label, required }) => (
               <div key={id} className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 w-40 shrink-0">
-                  {label} {required && <span className="text-red-500">*</span>}
+                <label className="text-[10px] uppercase tracking-[0.08em] text-[#64748B] w-40 shrink-0">
+                  {label} {required && <span className="text-[#EF4444]">*</span>}
                 </label>
                 <select
                   value={mapowanie[id] || ''}
@@ -237,30 +241,30 @@ export default function ModalImportCSV({ onClose }) {
       {/* Krok 3 — Podgląd */}
       {krok === 3 && (
         <div>
-          <p className="text-sm text-gray-500 mb-3">
+          <p className="text-[#64748B] text-xs mb-3">
             Podgląd pierwszych {podglad.length} wierszy:
           </p>
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-[#1A2535]">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50">
+              <thead className="bg-[#141921]">
                 <tr>
                   {POLA_CRM.filter(p => mapowanie[p.id]).map(p => (
-                    <th key={p.id} className="text-left px-3 py-2 font-medium text-gray-500">{p.label}</th>
+                    <th key={p.id} className="text-left px-3 py-2"><span className="section-label">{p.label}</span></th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {podglad.map((row, i) => (
-                  <tr key={i} className="border-t border-gray-100">
+                  <tr key={i} className="border-t border-[#1A2535] hover:bg-[#0C1520]">
                     {POLA_CRM.filter(p => mapowanie[p.id]).map(p => (
-                      <td key={p.id} className="px-3 py-2 text-gray-700">{row[p.id] || '—'}</td>
+                      <td key={p.id} className="px-3 py-2 text-[#64748B]">{row[p.id] || '—'}</td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-[10px] text-[#64748B] mt-2">
             Łącznie do zaimportowania: {csvData.rows.length} wierszy (duplikaty wg telefonu zostaną pominięte)
           </p>
           <div className="flex justify-end gap-2 mt-4">
@@ -275,13 +279,10 @@ export default function ModalImportCSV({ onClose }) {
       {/* Krok 4 — Wynik */}
       {krok === 4 && wynik && (
         <div className="text-center py-6">
-          <div className="text-5xl mb-4">✅</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Import zakończony</h3>
-          <p className="text-gray-600">
-            Zaimportowano <span className="font-bold text-green-600">{wynik.dodane}</span> kontaktów
-          </p>
+          <div className="font-mono text-5xl font-bold text-[#10B981] mb-3 animate-entry">{wynik.dodane}</div>
+          <p className="section-label mb-4">kontaktów zaimportowanych</p>
           {wynik.pominiete > 0 && (
-            <p className="text-gray-400 text-sm mt-1">
+            <p className="text-[#64748B] text-xs mt-1">
               Pominięto {wynik.pominiete} duplikatów / pustych wierszy
             </p>
           )}

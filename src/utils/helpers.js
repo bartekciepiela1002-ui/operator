@@ -32,30 +32,30 @@ export const STATUS_LABELS = {
 }
 
 export const STATUS_COLORS = {
-  do_zadzwonienia: 'bg-gray-100 text-gray-700 border-gray-200',
-  proby_kontaktu: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  w_kontakcie: 'bg-blue-100 text-blue-800 border-blue-200',
-  prosi_o_maila: 'bg-purple-100 text-purple-800 border-purple-200',
-  mail_wyslany: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-  demo_umowione: 'bg-orange-100 text-orange-800 border-orange-200',
-  po_demo: 'bg-amber-100 text-amber-800 border-amber-200',
-  zamkniete_tak: 'bg-green-100 text-green-800 border-green-200',
-  zamkniete_nie: 'bg-red-100 text-red-800 border-red-200',
-  odlozone: 'bg-stone-100 text-stone-700 border-stone-200',
-  archiwum: 'bg-gray-200 text-gray-600 border-gray-300'
+  do_zadzwonienia: 'bg-[#0C1520] text-[#64748B] border-[#1A2535]',
+  proby_kontaktu:  'bg-[#1A1200] text-[#F59E0B] border-[#3D2800]',
+  w_kontakcie:     'bg-[#001A28] text-[#22D4F0] border-[#003A56]',
+  prosi_o_maila:   'bg-[#1A0028] text-[#A78BFA] border-[#3D0056]',
+  mail_wyslany:    'bg-[#001428] text-[#60A5FA] border-[#002856]',
+  demo_umowione:   'bg-[#1A0A00] text-[#FB923C] border-[#3D1A00]',
+  po_demo:         'bg-[#1A1000] text-[#FBBF24] border-[#3D2800]',
+  zamkniete_tak:   'bg-[#001A0E] text-[#10B981] border-[#003D1E]',
+  zamkniete_nie:   'bg-[#1A0000] text-[#EF4444] border-[#3D0000]',
+  odlozone:        'bg-[#0F1218] text-[#94A3B8] border-[#1A2535]',
+  archiwum:        'bg-[#0B0D12] text-[#2A3B4C] border-[#1A2535]'
 }
 
 export const STATUS_COLUMN_COLORS = {
-  do_zadzwonienia: 'border-t-gray-400',
-  proby_kontaktu: 'border-t-yellow-400',
-  w_kontakcie: 'border-t-blue-500',
-  prosi_o_maila: 'border-t-purple-500',
-  mail_wyslany: 'border-t-indigo-500',
-  demo_umowione: 'border-t-orange-500',
-  po_demo: 'border-t-amber-500',
-  zamkniete_tak: 'border-t-green-500',
-  zamkniete_nie: 'border-t-red-500',
-  odlozone: 'border-t-stone-400'
+  do_zadzwonienia: 'border-t-[#2A3B4C]',
+  proby_kontaktu:  'border-t-[#F59E0B]',
+  w_kontakcie:     'border-t-[#22D4F0]',
+  prosi_o_maila:   'border-t-[#A78BFA]',
+  mail_wyslany:    'border-t-[#60A5FA]',
+  demo_umowione:   'border-t-[#FB923C]',
+  po_demo:         'border-t-[#FBBF24]',
+  zamkniete_tak:   'border-t-[#10B981]',
+  zamkniete_nie:   'border-t-[#EF4444]',
+  odlozone:        'border-t-[#94A3B8]'
 }
 
 export const POWOD_LABELS = {

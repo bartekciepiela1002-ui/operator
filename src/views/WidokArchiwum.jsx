@@ -49,13 +49,13 @@ export default function WidokArchiwum() {
     setPotwierdzId(null)
   }
 
-  const filtrBtn = (val, label) => (
+  const Chip = ({ val, label }) => (
     <button
       onClick={() => setFiltr(val)}
-      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      className={`text-[10px] px-2 py-0.5 rounded border tracking-[0.04em] transition-all ${
         filtr === val
-          ? 'bg-indigo-600 text-white'
-          : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+          ? 'bg-[#091C28] text-[#22D4F0] border-[#22D4F0]/40'
+          : 'text-[#64748B] border-[#1A2535] hover:border-[#22D4F0] hover:text-[#22D4F0]'
       }`}
     >
       {label}
@@ -67,35 +67,35 @@ export default function WidokArchiwum() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">Archiwum</h1>
-        <span className="text-sm text-gray-400">{archiwum.length} kontaktów</span>
+        <span className="section-label">ARCHIWUM</span>
+        <span className="font-mono text-[#64748B] text-[11px]">{archiwum.length} kontaktów</span>
       </div>
 
       <div className="flex gap-2 mb-4">
-        {filtrBtn('wszystkie', 'Wszystkie')}
-        {filtrBtn('archiwum', 'Archiwum')}
-        {filtrBtn('nurturing', 'Nurturing')}
-        {filtrBtn('odlozone', 'Odłożone')}
-        {filtrBtn('zamkniete_nie', 'Zamknięte ✗')}
+        <Chip val="wszystkie" label="Wszystkie" />
+        <Chip val="archiwum" label="Archiwum" />
+        <Chip val="nurturing" label="Nurturing" />
+        <Chip val="odlozone" label="Odłożone" />
+        <Chip val="zamkniete_nie" label="Zamknięte ✗" />
       </div>
 
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-100">
+          <thead className="bg-[#141921] border-b border-[#1A2535]">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Salon</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Miasto</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Data archiwizacji</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Powrót / przypomnienie</th>
-              <th className="text-left px-4 py-3 font-medium text-gray-500">Powód</th>
-              <th className="px-4 py-3"></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Salon</span></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Miasto</span></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Status</span></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Data archiwizacji</span></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Powrót / przypomnienie</span></th>
+              <th className="text-left px-4 py-2.5"><span className="section-label">Powód</span></th>
+              <th className="px-4 py-2.5"></th>
             </tr>
           </thead>
           <tbody>
             {archiwum.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-12 text-gray-400">
+                <td colSpan={7} className="text-center py-10 text-[#64748B] text-xs">
                   Brak kontaktów w archiwum
                 </td>
               </tr>
@@ -106,29 +106,29 @@ export default function WidokArchiwum() {
                 return (
                   <tr
                     key={k.id}
-                    className="border-t border-gray-50 hover:bg-gray-50 transition-colors"
+                    className="border-t border-[#1A2535] hover:bg-[#0C1520] transition-colors"
                   >
                     <td className="px-4 py-3">
                       <button
                         onClick={() => navigate(`/kontakt/${k.id}`)}
-                        className="font-medium text-gray-900 hover:text-indigo-600 text-left"
+                        className="font-medium text-[#E2E8F0] hover:text-[#22D4F0] text-left transition-colors"
                       >
                         {k.nazwaSlonu}
                       </button>
-                      {k.imie && <div className="text-xs text-gray-400">{k.imie}</div>}
+                      {k.imie && <div className="text-xs text-[#64748B]">{k.imie}</div>}
                     </td>
-                    <td className="px-4 py-3 text-gray-500">{k.miasto || '—'}</td>
+                    <td className="px-4 py-3 text-[#64748B] text-xs">{k.miasto || '—'}</td>
                     <td className="px-4 py-3"><StatusBadge status={k.status} /></td>
-                    <td className="px-4 py-3 text-gray-500">{formatDate(k.dataArchiwizacji)}</td>
+                    <td className="px-4 py-3 font-mono text-[11px] text-[#64748B]">{formatDate(k.dataArchiwizacji)}</td>
                     <td className="px-4 py-3">
                       {powrot ? (
-                        <span className={`text-sm font-medium ${powrotMiniony ? 'text-green-600' : 'text-gray-500'}`}>
+                        <span className={`font-mono text-[11px] ${powrotMiniony ? 'text-[#10B981]' : 'text-[#64748B]'}`}>
                           {formatDate(powrot)}
                           {powrotMiniony && ' — czas wrócić!'}
                         </span>
                       ) : '—'}
                     </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
+                    <td className="px-4 py-3 text-[#64748B] text-xs">
                       {POWOD_LABELS[k.powodOdmowy] || '—'}
                     </td>
                     <td className="px-4 py-3">
@@ -149,11 +149,11 @@ export default function WidokArchiwum() {
 
       {potwierdzId && kontaktDoPotwierdzenia && (
         <Modal title="Reaktywuj kontakt" onClose={() => setPotwierdzId(null)}>
-          <p className="text-gray-600 text-sm mb-1">
-            Kontakt <strong>{kontaktDoPotwierdzenia.nazwaSlonu}</strong> wróci do statusu{' '}
-            <strong>Do zadzwonienia</strong>.
+          <p className="text-[#64748B] text-sm mb-1">
+            Kontakt <strong className="text-[#E2E8F0]">{kontaktDoPotwierdzenia.nazwaSlonu}</strong> wróci do statusu{' '}
+            <strong className="text-[#E2E8F0]">Do zadzwonienia</strong>.
           </p>
-          <p className="text-amber-600 text-sm mb-4">
+          <p className="text-[#F59E0B] text-xs mb-4">
             Liczniki prób tel i outreach zostaną wyzerowane.
           </p>
           <div className="flex justify-end gap-2">

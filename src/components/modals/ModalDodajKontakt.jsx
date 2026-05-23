@@ -67,15 +67,15 @@ export default function ModalDodajKontakt({ onClose, kontaktPoczatkowy }) {
   const pole = (label, id, type = 'text', required = false) => (
     <div>
       <label className="label">
-        {label} {required && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-[#EF4444]">*</span>}
       </label>
       <input
         type={type}
         value={dane[id]}
         onChange={e => set(id, e.target.value)}
-        className={`input ${bledy[id] ? 'border-red-400 focus:ring-red-300' : ''}`}
+        className={`input ${bledy[id] ? 'border-[#EF4444]' : ''}`}
       />
-      {bledy[id] && <p className="text-red-500 text-xs mt-1">{bledy[id]}</p>}
+      {bledy[id] && <p className="text-[#EF4444] text-[10px] mt-1">{bledy[id]}</p>}
     </div>
   )
 
@@ -126,7 +126,7 @@ export default function ModalDodajKontakt({ onClose, kontaktPoczatkowy }) {
         </div>
       </div>
 
-      <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
+      <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-[#1A2535]">
         <button onClick={onClose} className="btn-ghost">Anuluj</button>
         <button onClick={zapisz} className="btn-primary">
           {edycja ? 'Zapisz zmiany' : 'Dodaj kontakt'}

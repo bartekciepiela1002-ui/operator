@@ -2,50 +2,167 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body, #root {
+    font-size: 15px;
+    background-color: #0B0D12;
+    color: #E2E8F0;
+    font-family: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* HUD scanlines — subtle CRT texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.06) 2px,
+      rgba(0, 0, 0, 0.06) 4px
+    );
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0B0D12;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1A2535;
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2A3B4C;
+  }
+
+  select option {
+    background-color: #141921;
+    color: #E2E8F0;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) sepia(1) saturate(2) hue-rotate(165deg);
+    opacity: 0.6;
+  }
+
+  /* Focus ring — HUD cyan outline */
+  :focus-visible {
+    outline: 1px solid rgba(34, 212, 240, 0.6);
+    outline-offset: 2px;
+  }
+}
+
+@keyframes fillBar {
+  from { width: 0; }
+  to   { width: var(--fill-w, 0%); }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hudBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 @layer components {
   .btn {
-    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium tracking-wide transition-all duration-150 cursor-pointer disabled:opacity-40 active:scale-[0.97] focus-visible:outline-none;
   }
   .btn-primary {
-    @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+    @apply btn bg-[#22D4F0] text-[#050810] font-bold hover:brightness-110;
+    box-shadow: 0 0 14px rgba(34, 212, 240, 0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 22px rgba(34, 212, 240, 0.55), inset 0 1px 0 rgba(255,255,255,0.15);
   }
   .btn-ghost {
-    @apply btn bg-white text-gray-700 border border-gray-200 hover:bg-gray-50;
+    @apply btn bg-transparent text-[#2A3B4C] border border-[#1A2535] hover:border-[#22D4F0] hover:text-[#22D4F0] transition-all duration-150;
   }
   .btn-yellow {
-    @apply btn bg-yellow-100 text-yellow-800 hover:bg-yellow-200;
+    @apply btn bg-transparent text-[#F59E0B] border border-[#1A2535] hover:border-[#F59E0B];
   }
   .btn-blue {
-    @apply btn bg-blue-600 text-white hover:bg-blue-700;
+    @apply btn bg-[#091C28] text-[#22D4F0] border border-[#22D4F0]/40 hover:border-[#22D4F0];
   }
   .btn-indigo {
-    @apply btn bg-indigo-600 text-white hover:bg-indigo-700;
+    @apply btn bg-[#22D4F0] text-[#050810] font-bold hover:brightness-110;
   }
   .btn-purple {
-    @apply btn bg-purple-600 text-white hover:bg-purple-700;
+    @apply btn bg-transparent text-[#A78BFA] border border-[#1A2535] hover:border-[#A78BFA];
   }
   .btn-orange {
-    @apply btn bg-orange-600 text-white hover:bg-orange-700;
+    @apply btn bg-transparent text-[#FB923C] border border-[#1A2535] hover:border-[#FB923C];
   }
   .btn-amber {
-    @apply btn bg-amber-600 text-white hover:bg-amber-700;
+    @apply btn bg-transparent text-[#FBBF24] border border-[#1A2535] hover:border-[#FBBF24];
   }
   .btn-green {
-    @apply btn bg-green-600 text-white hover:bg-green-700;
+    @apply btn bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30 hover:bg-[#10B981]/20;
   }
   .btn-red {
-    @apply btn bg-red-600 text-white hover:bg-red-700;
+    @apply btn bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30 hover:bg-[#EF4444]/20;
   }
   .btn-stone {
-    @apply btn bg-stone-200 text-stone-700 hover:bg-stone-300;
+    @apply btn bg-transparent text-[#2A3B4C] border border-[#1A2535] hover:border-[#22D4F0] hover:text-[#22D4F0];
   }
   .input {
-    @apply border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 w-full;
+    @apply bg-[#141921] border border-[#1A2535] rounded-lg px-3 py-2 text-sm text-[#E2E8F0] focus:outline-none focus:border-[#22D4F0] w-full transition-colors duration-150 placeholder:text-[#2A3B4C] cursor-text;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  .input:focus {
+    box-shadow: 0 0 0 1px rgba(34, 212, 240, 0.15), inset 0 0 10px rgba(34, 212, 240, 0.04);
   }
   .label {
-    @apply block text-sm font-medium text-gray-600 mb-1;
+    @apply block text-[10px] font-medium text-[#64748B] mb-1.5 uppercase tracking-[0.12em];
+  }
+  .section-label {
+    @apply text-[10px] font-medium text-[#64748B] uppercase tracking-[0.14em];
   }
   .card {
-    @apply bg-white border border-gray-200 rounded-lg;
+    @apply bg-[#0F1218] border border-[#1A2535] rounded-lg relative;
+  }
+  /* HUD bracket corners — top-left */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 10px;
+    height: 10px;
+    border-top: 1px solid rgba(34, 212, 240, 0.3);
+    border-left: 1px solid rgba(34, 212, 240, 0.3);
+    border-radius: 1px 0 0 0;
+    pointer-events: none;
+  }
+  /* HUD bracket corners — bottom-right */
+  .card::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 10px;
+    height: 10px;
+    border-bottom: 1px solid rgba(34, 212, 240, 0.3);
+    border-right: 1px solid rgba(34, 212, 240, 0.3);
+    border-radius: 0 0 1px 0;
+    pointer-events: none;
+  }
+  .animate-entry {
+    animation: fadeSlideIn 0.5s ease forwards;
   }
 }

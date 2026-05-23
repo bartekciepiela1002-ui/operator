@@ -69,6 +69,11 @@ export const archiwizujKontakt = (id) => {
   })
 }
 
+export const usunKontakt = (id) => {
+  const kontakty = wczytajKontakty()
+  zapiszKontakty(kontakty.filter(k => k.id !== id))
+}
+
 export const pobierzKontakt = (id) => {
   return wczytajKontakty().find(k => k.id === id) || null
 }
