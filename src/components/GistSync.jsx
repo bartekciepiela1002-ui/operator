@@ -1,6 +1,4 @@
 // components/GistSync.jsx
-// Wklej ten komponent w /ustawienia, pod sekcją AI Mentor
-
 import { useState, useEffect } from 'react';
 import {
   IconBrandGithub,
@@ -26,13 +24,13 @@ import {
 export default function GistSync() {
   const [token, setToken] = useState('');
   const [tokenWidoczny, setTokenWidoczny] = useState(false);
-  const [statusTokenu, setStatusTokenu] = useState(null); // null | 'ok' | 'blad'
+  const [statusTokenu, setStatusTokenu] = useState(null);
   const [loginGithub, setLoginGithub] = useState('');
   const [testowanie, setTestowanie] = useState(false);
 
   const [zapisywanie, setZapisywanie] = useState(false);
   const [przywracanie, setPrzywracanie] = useState(false);
-  const [wynikZapisu, setWynikZapisu] = useState(null);   // { url, liczbaKontaktow, dataBackupu }
+  const [wynikZapisu, setWynikZapisu] = useState(null);
   const [wynikPrzywracania, setWynikPrzywracania] = useState(null);
   const [blad, setBlad] = useState('');
 
@@ -40,6 +38,7 @@ export default function GistSync() {
 
   const gistId = getGistId();
 
+  // Wczytaj zapisany token przy starcie
   useEffect(() => {
     const zapisany = getGithubToken();
     if (zapisany) {
@@ -48,7 +47,7 @@ export default function GistSync() {
     }
   }, []);
 
-  // Autosave tokenu z debounce 800ms (wzorem pitch script)
+  // Autosave z debounce 800ms
   useEffect(() => {
     if (!token) return;
     const t = setTimeout(() => {
@@ -57,16 +56,24 @@ export default function GistSync() {
     return () => clearTimeout(t);
   }, [token]);
 
+  // NAPRAWKA: zapisz natychmiast gdy pole traci fokus
+  const handleTokenBlur = () => {
+    if (token.trim()) {
+      saveGithubToken(token.trim());
+    }
+  };
+
   async function handleTestuj() {
     if (!token.trim()) return;
     setTestowanie(true);
     setBlad('');
     setStatusTokenu(null);
+    // Zapisz token przed testem — nie czekaj na debounce
+    saveGithubToken(token.trim());
     try {
       const login = await testujToken(token.trim());
       setLoginGithub(login);
       setStatusTokenu('ok');
-      saveGithubToken(token.trim());
     } catch (e) {
       setStatusTokenu('blad');
       setBlad(e.message);
@@ -113,7 +120,6 @@ export default function GistSync() {
 
   return (
     <div className="card p-6 space-y-6">
-      {/* Nagłówek */}
       <div className="flex items-center gap-3">
         <IconBrandGithub size={20} className="text-[#22D4F0]" />
         <div>
@@ -124,7 +130,6 @@ export default function GistSync() {
         </div>
       </div>
 
-      {/* Token */}
       <div className="space-y-2">
         <label className="text-xs text-[#64748B] uppercase tracking-widest">
           GitHub Personal Access Token
@@ -138,6 +143,7 @@ export default function GistSync() {
                 setToken(e.target.value);
                 setStatusTokenu(null);
               }}
+              onBlur={handleTokenBlur}
               placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
               className="w-full bg-[#0B0D12] border border-[#253040] rounded px-3 py-2 text-sm
                          font-mono text-[#E2E8F0] placeholder-[#253040]
@@ -167,10 +173,14 @@ export default function GistSync() {
           </button>
         </div>
 
-        {/* Status tokenu */}
         {statusTokenu === 'ok' && loginGithub && (
           <p className="text-xs text-[#10B981] flex items-center gap-1">
             <IconCheck size={11} /> Połączono jako <span className="font-mono">{loginGithub}</span>
+          </p>
+        )}
+        {statusTokenu === 'ok' && !loginGithub && (
+          <p className="text-xs text-[#10B981] flex items-center gap-1">
+            <IconCheck size={11} /> Token zapisany
           </p>
         )}
         {statusTokenu === 'blad' && (
@@ -179,7 +189,6 @@ export default function GistSync() {
           </p>
         )}
 
-        {/* Instrukcja */}
         <p className="text-xs text-[#253040] leading-relaxed">
           Utwórz token na{' '}
           <a
@@ -194,9 +203,7 @@ export default function GistSync() {
         </p>
       </div>
 
-      {/* Akcje */}
       <div className="grid grid-cols-2 gap-3">
-        {/* Zapisz */}
         <div className="space-y-1.5">
           <button
             onClick={handleZapisz}
@@ -227,7 +234,6 @@ export default function GistSync() {
           )}
         </div>
 
-        {/* Przywróć */}
         <div className="space-y-1.5">
           {potwierdzPrzywracanie ? (
             <div className="space-y-1.5">
@@ -276,7 +282,6 @@ export default function GistSync() {
         </div>
       </div>
 
-      {/* Błąd globalny */}
       {blad && statusTokenu !== 'blad' && (
         <p className="text-xs text-red-400 flex items-start gap-1.5">
           <IconX size={12} className="mt-0.5 shrink-0" />
@@ -284,7 +289,6 @@ export default function GistSync() {
         </p>
       )}
 
-      {/* Info o Gist ID */}
       {maGistId && (
         <p className="text-xs text-[#253040] font-mono truncate">
           Gist: {gistId}
