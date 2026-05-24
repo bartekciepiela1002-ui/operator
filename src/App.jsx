@@ -16,6 +16,7 @@ import ModalDodajKontakt from './components/modals/ModalDodajKontakt'
 import ModalImportCSV from './components/modals/ModalImportCSV'
 import WidokUstawienia from './views/WidokUstawienia'
 import WidokDigest from './views/WidokDigest'
+import WidokMisje from './views/WidokMisje'
 
 function AppContent() {
   const [modalDodaj, setModalDodaj] = useState(false)
@@ -42,6 +43,7 @@ function AppContent() {
             <Route path="/statystyki" element={<WidokStatystyki />} />
             <Route path="/archiwum" element={<WidokArchiwum />} />
             <Route path="/digest" element={<WidokDigest />} />
+            <Route path="/misje" element={<WidokMisje />} />
             <Route path="/ustawienia" element={<WidokUstawienia />} />
           </Routes>
         </main>

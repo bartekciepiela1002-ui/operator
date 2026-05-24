@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { zapytajMentora } from '../utils/mentor'
 
 export const PITCH_KEY = 'crm_pitch_script'
 
@@ -12,6 +13,112 @@ export function loadPitch() {
 
 function savePitch(data) {
   localStorage.setItem(PITCH_KEY, JSON.stringify(data))
+}
+
+const API_KEY = 'crm_anthropic_key'
+
+function SekcjaAIMentor() {
+  const [klucz, setKlucz] = useState('')
+  const [zapisany, setZapisany] = useState(Boolean(localStorage.getItem(API_KEY)))
+  const [zmienMode, setZmienMode] = useState(false)
+  const [testStatus, setTestStatus] = useState(null) // null | 'loading' | { ok, msg }
+
+  const handleZapisz = () => {
+    if (!klucz.trim()) return
+    localStorage.setItem(API_KEY, klucz.trim())
+    setZapisany(true)
+    setZmienMode(false)
+    setKlucz('')
+    setTestStatus(null)
+  }
+
+  const handleZmien = () => {
+    setZmienMode(true)
+    setZapisany(false)
+    setTestStatus(null)
+  }
+
+  const handleTest = async () => {
+    setTestStatus('loading')
+    try {
+      const odpowiedz = await zapytajMentora({
+        systemPrompt: 'Odpowiedz jednym krótkim zdaniem po polsku.',
+        userMessage: 'Napisz: połączenie działa poprawnie.'
+      })
+      setTestStatus({ ok: true, msg: odpowiedz })
+    } catch (err) {
+      if (err.message === 'BRAK_KLUCZA') {
+        setTestStatus({ ok: false, msg: 'Najpierw wpisz i zapisz klucz API' })
+      } else if (err.message.includes('401') || err.message.toLowerCase().includes('invalid')) {
+        setTestStatus({ ok: false, msg: 'Nieprawidłowy klucz API — sprawdź czy skopiowałeś go poprawnie' })
+      } else {
+        setTestStatus({ ok: false, msg: err.message })
+      }
+    }
+  }
+
+  return (
+    <div className="card p-5 mb-5">
+      <p className="section-label mb-5">AI Mentor</p>
+
+      <div className="mb-4">
+        <label className="label">Klucz API Anthropic</label>
+
+        {zapisany && !zmienMode ? (
+          <div className="flex items-center gap-3">
+            <span className="input flex-1 font-mono text-[#64748B] cursor-default select-none">
+              ••••••••••••••••••••
+            </span>
+            <button onClick={handleZmien} className="btn-ghost text-xs shrink-0">
+              Zmień klucz
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <input
+              type="password"
+              value={klucz}
+              onChange={e => setKlucz(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleZapisz() }}
+              placeholder="sk-ant-..."
+              className="input flex-1 font-mono"
+              autoFocus={zmienMode}
+            />
+            <button
+              onClick={handleZapisz}
+              disabled={!klucz.trim()}
+              className="btn-primary shrink-0 disabled:opacity-40"
+            >
+              Zapisz klucz
+            </button>
+          </div>
+        )}
+
+        <p className="text-[10px] text-[#64748B] mt-2 leading-relaxed">
+          Klucz przechowywany lokalnie w przeglądarce. Nigdy nie opuszcza Twojego komputera.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          onClick={handleTest}
+          disabled={testStatus === 'loading'}
+          className="btn-ghost text-xs disabled:opacity-40"
+        >
+          {testStatus === 'loading' ? 'Testuję...' : 'Testuj połączenie'}
+        </button>
+
+        {testStatus && testStatus !== 'loading' && (
+          <span
+            className="text-xs font-mono"
+            style={{ color: testStatus.ok ? '#10B981' : '#EF4444' }}
+          >
+            {testStatus.ok ? `✓ ${testStatus.msg}` : `✗ ${testStatus.msg}`}
+          </span>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function WidokUstawienia() {
@@ -56,6 +163,8 @@ export default function WidokUstawienia() {
       <div className="flex items-baseline gap-3 mb-6">
         <h1 className="text-[#E2E8F0] font-medium text-xl">Ustawienia</h1>
       </div>
+
+      <SekcjaAIMentor />
 
       <div className="card p-5">
         <p className="section-label mb-5">Skrypt pitcha</p>

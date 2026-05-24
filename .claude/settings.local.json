@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm --version)",
+      "Bash(uipro init:*)",
+      "Bash(xargs grep:*)",
+      "Bash(sed -i \"s/text-\\\\[#2A3B4C\\\\]/text-[#64748B]/g\" src/views/WidokKontakt.jsx)",
+      "Bash(sed -i \"s/'#2A3B4C'/'#64748B'/g\" src/views/WidokKontakt.jsx)"
     ]
   }
 }

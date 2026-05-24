@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useKontakty } from '../context/KontaktyContext'
 import StatusBadge from '../components/StatusBadge'
+import AlertMentora from '../components/AlertMentora'
+import PorannyBrief from '../components/PorannyBrief'
+import SmartNudges from '../components/SmartNudges'
 import { edytujKontakt } from '../utils/storage'
 import { today, daysDiff, formatDate } from '../utils/helpers'
 
@@ -92,6 +95,10 @@ export default function WidokDzis() {
         <h1 className="text-[#E2E8F0] font-medium text-xl">Dziś</h1>
         <span className="font-mono text-[11px] text-[#64748B]">{formatDate(dzis)}</span>
       </div>
+
+      <AlertMentora />
+      <PorannyBrief />
+      <SmartNudges />
 
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">

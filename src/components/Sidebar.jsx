@@ -1,8 +1,31 @@
 import { NavLink } from 'react-router-dom'
 import { useKontakty } from '../context/KontaktyContext'
 import { useSprint } from '../context/SprintContext'
-import { today } from '../utils/helpers'
-import { IconPlayerPlay, IconSun, IconLayoutKanban, IconList, IconChartBar, IconArchive, IconCalendarWeek, IconSettings } from '@tabler/icons-react'
+import { today, getDzisiajLokalnie } from '../utils/helpers'
+
+function pobierzPostepMisji() {
+  try {
+    const raw = localStorage.getItem('crm_misje')
+    if (!raw) return { ukonczone: 0, wszystkich: 6 }
+    const { misje } = JSON.parse(raw)
+    return {
+      ukonczone: (misje || []).filter(m => m.ukonczona).length,
+      wszystkich: 6
+    }
+  } catch (_) { return { ukonczone: 0, wszystkich: 6 } }
+}
+
+function policzAktywneNudges() {
+  try {
+    const raw = localStorage.getItem(`crm_nudges_${getDzisiajLokalnie()}`)
+    if (!raw) return 0
+    const { nudges } = JSON.parse(raw)
+    return (nudges || []).filter(n =>
+      n.typ === 'warning' || n.typ === 'action'
+    ).length
+  } catch (_) { return 0 }
+}
+import { IconPlayerPlay, IconSun, IconLayoutKanban, IconList, IconChartBar, IconArchive, IconCalendarWeek, IconSettings, IconTrophy } from '@tabler/icons-react'
 
 export default function Sidebar({ onDodaj, onImport }) {
   const { kontakty } = useKontakty()
@@ -46,6 +69,19 @@ export default function Sidebar({ onDodaj, onImport }) {
     </span>
   ) : null
 
+  const postepMisji = pobierzPostepMisji()
+  const misjiUkonczone = postepMisji.ukonczone
+  const misjiWszystkich = postepMisji.wszystkich
+  const misjeWszystkieUkonczone = misjiUkonczone === misjiWszystkich
+
+  const nudgesCount = policzAktywneNudges()
+  const nudgesBadge = nudgesCount > 0 ? (
+    <span className="text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1"
+      style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B' }}>
+      {nudgesCount}
+    </span>
+  ) : null
+
   return (
     <aside className="w-[220px] bg-[#080B10] border-r border-[#1A2535] flex flex-col h-full py-5 shrink-0">
       <div className="px-5 mb-8">
@@ -71,6 +107,7 @@ export default function Sidebar({ onDodaj, onImport }) {
         <NavLink to="/dzis" className={navCls}>
           <IconSun size={15} />
           <span className="flex-1">Dziś</span>
+          {nudgesBadge}
           {przypomnieniaBadge}
         </NavLink>
 
@@ -106,6 +143,20 @@ export default function Sidebar({ onDodaj, onImport }) {
         <NavLink to="/digest" className={navCls}>
           <IconCalendarWeek size={15} />
           <span>Digest</span>
+        </NavLink>
+
+        <NavLink to="/misje" className={navCls}>
+          <IconTrophy size={15} />
+          <span className="flex-1">Misje</span>
+          <span
+            className="text-[10px] font-bold font-mono rounded px-1.5 py-0.5"
+            style={{
+              background: misjeWszystkieUkonczone ? 'rgba(16,185,129,0.15)' : 'rgba(34,212,240,0.1)',
+              color: misjeWszystkieUkonczone ? '#10B981' : '#22D4F0',
+            }}
+          >
+            {misjiUkonczone}/{misjiWszystkich}
+          </span>
         </NavLink>
 
         <div className="mt-auto pt-3 border-t border-[#1A2535] mx-[18px]" />
