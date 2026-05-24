@@ -90,8 +90,9 @@ export default function FocusMode({ onClose }) {
         !pominiete.includes(k.id)
       )
       .sort((a, b) => {
-        const da = a.dataOstatniegoKontaktu || '2000-01-01'
-        const db = b.dataOstatniegoKontaktu || '2000-01-01'
+        // Sortuj po dacie utworzenia rosnąco — Tier A (importowany pierwszy) na górze
+        const da = a.dataUtworzenia || '2000-01-01T00:00:00.000Z'
+        const db = b.dataUtworzenia || '2000-01-01T00:00:00.000Z'
         return da.localeCompare(db)
       })
   }, [kontakty, pominiete])
@@ -207,6 +208,10 @@ export default function FocusMode({ onClose }) {
           >
             {kontakt.telefon}
           </a>
+
+          {kontakt.www && (
+            <p className="text-[#64748B] text-xs mt-1 break-all">{kontakt.www}</p>
+          )}
 
           {kontakt.tor === 'nie_odbiera' && (
             <span className="text-[10px] font-mono bg-[#141921] text-[#F59E0B] px-2 py-0.5 rounded">
