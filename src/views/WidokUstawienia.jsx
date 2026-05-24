@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { zapytajMentora } from '../utils/mentor'
-
+import GistSync from '../components/GistSync'
 export const PITCH_KEY = 'crm_pitch_script'
 
 export function loadPitch() {
@@ -165,7 +165,7 @@ export default function WidokUstawienia() {
       </div>
 
       <SekcjaAIMentor />
-
+      <GistSync />
       <div className="card p-5">
         <p className="section-label mb-5">Skrypt pitcha</p>
 
