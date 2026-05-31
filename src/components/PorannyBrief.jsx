@@ -28,7 +28,7 @@ export default function PorannyBrief() {
   const [ladowanie, setLadowanie] = useState(false)
   const [blad, setBlad] = useState(null)
 
-  const cacheKey = `crm_brief_${getDzisiajLokalnie()}`
+  const cacheKey = `operator_brief_${getDzisiajLokalnie()}`
 
   useEffect(() => {
     const raw = localStorage.getItem(cacheKey)

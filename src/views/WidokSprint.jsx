@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useSprint } from '../context/SprintContext'
-import { startSprint, getLast7Sprints, getDefaultCel, resetTodaySprint } from '../utils/sprint'
+import { useOperator } from '../context/OperatorContext'
+import { wczytajDzien, zapiszDzien, nowyDayRecord, wczytajWszystkieDni } from '../utils/storage'
 import { today } from '../utils/helpers'
 
 const DNI = ['NIE', 'PON', 'WT', 'ŚR', 'CZW', 'PT', 'SOB']
 
-function get7Days() {
+function get7DayDates() {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date()
     d.setDate(d.getDate() - (6 - i))
@@ -13,23 +14,46 @@ function get7Days() {
   })
 }
 
+function getDefaultCel(challengeState) {
+  if (!challengeState?.startDate) return 15
+  const week = Math.floor((Date.now() - new Date(challengeState.startDate).getTime()) / (86400000 * 7)) + 1
+  if (week <= 2) return 15
+  if (week <= 4) return 25
+  return 50
+}
+
 export default function WidokSprint() {
   const { sprintDzis, odswierzSprint, setFocusModeOpen } = useSprint()
-  const [celInput, setCelInput] = useState(String(getDefaultCel()))
+  const { challengeState } = useOperator()
+  const [celInput, setCelInput] = useState(String(getDefaultCel(challengeState)))
+
+  const sprintAktywny = sprintDzis && (sprintDzis.sprintCel || 0) > 0
 
   const handleStart = () => {
-    const cel = Math.max(parseInt(celInput) || getDefaultCel(), 1)
-    startSprint(cel)
+    const cel = Math.max(parseInt(celInput) || getDefaultCel(challengeState), 1)
+    const dzis = today()
+    const current = wczytajDzien(dzis) || nowyDayRecord(dzis)
+    zapiszDzien({ ...current, sprintCel: cel })
     odswierzSprint()
   }
 
+  const handleReset = () => {
+    const dzis = today()
+    const current = wczytajDzien(dzis)
+    if (!current) return
+    zapiszDzien({ ...current, sprintCel: 0, sprintWykonano: 0, sprintUkonczony: false })
+    odswierzSprint()
+  }
+
+  // Historia 7 dni z DayRecord
+  const wszystkieDni = wczytajWszystkieDni()
   const historiaMap = {}
-  getLast7Sprints().forEach(s => { historiaMap[s.date] = s })
+  wszystkieDni.forEach(d => { historiaMap[d.date] = d })
   if (sprintDzis) historiaMap[sprintDzis.date] = sprintDzis
-  const dni7 = get7Days()
+  const dni7 = get7DayDates()
   const dzis = today()
 
-  if (!sprintDzis) {
+  if (!sprintAktywny) {
     return (
       <div className="p-6" style={{ maxWidth: 380 }}>
         <p className="section-label mb-6">DZIENNY SPRINT</p>
@@ -53,13 +77,13 @@ export default function WidokSprint() {
               textAlign: 'center',
               fontWeight: 'bold',
               fontFamily: 'monospace',
-              outline: 'none'
+              outline: 'none',
             }}
             onFocus={e => { e.target.style.borderColor = '#22D4F0' }}
             onBlur={e => { e.target.style.borderColor = '#1A2535' }}
           />
           <p className="text-center mb-5" style={{ fontSize: 11, color: '#64748B' }}>
-            Sugerowany cel: {getDefaultCel()}
+            Sugerowany cel: {getDefaultCel(challengeState)}
           </p>
           <button
             onClick={handleStart}
@@ -74,8 +98,8 @@ export default function WidokSprint() {
     )
   }
 
-  const { cel, wykonano, ukonczony } = sprintDzis
-  const procent = Math.min((wykonano / cel) * 100, 100)
+  const { sprintCel: cel, sprintWykonano: wykonano, sprintUkonczony: ukonczony } = sprintDzis
+  const procent = Math.min(cel > 0 ? (wykonano / cel) * 100 : 0, 100)
 
   return (
     <div style={{ maxWidth: 520 }} className="p-6">
@@ -98,7 +122,7 @@ export default function WidokSprint() {
               color: ukonczony ? '#10B981' : '#E2E8F0',
               textShadow: ukonczony
                 ? '0 0 24px rgba(16,185,129,0.4)'
-                : '0 0 24px rgba(226,232,240,0.1)'
+                : '0 0 24px rgba(226,232,240,0.1)',
             }}
           >
             {wykonano}
@@ -110,7 +134,7 @@ export default function WidokSprint() {
         <div className="mx-auto max-w-xs mb-6">
           <div className="h-[4px] bg-[#141921] rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full`}
+              className="h-full rounded-full"
               style={{
                 '--fill-w': `${procent}%`,
                 width: 0,
@@ -118,7 +142,7 @@ export default function WidokSprint() {
                 background: ukonczony ? '#10B981' : '#22D4F0',
                 boxShadow: ukonczony
                   ? '0 0 8px rgba(16,185,129,0.6)'
-                  : '0 0 8px rgba(34,212,240,0.6)'
+                  : '0 0 8px rgba(34,212,240,0.6)',
               }}
             />
           </div>
@@ -130,7 +154,7 @@ export default function WidokSprint() {
 
         <div className="mt-5">
           <button
-            onClick={() => { resetTodaySprint(); odswierzSprint() }}
+            onClick={handleReset}
             className="text-[10px] transition-colors"
             style={{ color: '#64748B' }}
             onMouseEnter={e => { e.target.style.color = '#EF4444' }}
@@ -152,9 +176,9 @@ function HistoriaDni({ dni7, historiaMap, dzis }) {
       <p className="section-label mb-3">OSTATNIE 7 DNI</p>
       <div className="flex gap-1.5">
         {dni7.map(dateStr => {
-          const sprint = historiaMap[dateStr]
-          const jest = Boolean(sprint)
-          const ukonczony = sprint?.ukonczony
+          const day = historiaMap[dateStr]
+          const jest = Boolean(day) && (day.sprintCel || 0) > 0
+          const ukonczony = day?.sprintUkonczony
           const jestDzis = dateStr === dzis
 
           const d = new Date(dateStr)
@@ -175,14 +199,14 @@ function HistoriaDni({ dni7, historiaMap, dzis }) {
               style={{
                 flex: 1, height: 48, borderRadius: 4, border: `1px solid ${border}`,
                 background: bg, display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s'
+                alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
               }}
             >
               <span style={{ fontSize: 8, letterSpacing: '0.06em', color: labelColor, lineHeight: 1 }}>
                 {dzienNazwa}
               </span>
               <span style={{ fontSize: 11, fontFamily: 'monospace', color: numColor, lineHeight: 1, marginTop: 2 }}>
-                {jest ? `${sprint.wykonano}/${sprint.cel}` : '—'}
+                {jest ? `${day.sprintWykonano}/${day.sprintCel}` : '—'}
               </span>
             </div>
           )

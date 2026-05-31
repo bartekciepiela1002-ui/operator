@@ -1,31 +1,27 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { zapytajMentora } from '../utils/mentor'
 import GistSync from '../components/GistSync'
-export const PITCH_KEY = 'crm_pitch_script'
+import { useOperator } from '../context/OperatorContext'
+import { zapiszChallenge, usunWszystkieDni, wczytajUstawienia, zapiszUstawienia } from '../utils/storage'
 
 export function loadPitch() {
-  try {
-    return JSON.parse(localStorage.getItem(PITCH_KEY)) || { opener: '', objekcje: [] }
-  } catch {
-    return { opener: '', objekcje: [] }
-  }
+  return wczytajUstawienia().pitch || { opener: '', objekcje: [] }
 }
 
 function savePitch(data) {
-  localStorage.setItem(PITCH_KEY, JSON.stringify(data))
+  zapiszUstawienia({ ...wczytajUstawienia(), pitch: data })
 }
-
-const API_KEY = 'crm_anthropic_key'
 
 function SekcjaAIMentor() {
   const [klucz, setKlucz] = useState('')
-  const [zapisany, setZapisany] = useState(Boolean(localStorage.getItem(API_KEY)))
+  const [zapisany, setZapisany] = useState(Boolean(wczytajUstawienia().anthropicKey))
   const [zmienMode, setZmienMode] = useState(false)
-  const [testStatus, setTestStatus] = useState(null) // null | 'loading' | { ok, msg }
+  const [testStatus, setTestStatus] = useState(null)
 
   const handleZapisz = () => {
     if (!klucz.trim()) return
-    localStorage.setItem(API_KEY, klucz.trim())
+    zapiszUstawienia({ ...wczytajUstawienia(), anthropicKey: klucz.trim() })
     setZapisany(true)
     setZmienMode(false)
     setKlucz('')
@@ -121,6 +117,138 @@ function SekcjaAIMentor() {
   )
 }
 
+function SekcjaChallenge() {
+  const { challengeState, odswierzChallenge, odswierzDzien } = useOperator()
+  const navigate = useNavigate()
+  const [dataStartu, setDataStartu] = useState(() => challengeState?.startDate || '')
+  const [savedDate, setSavedDate] = useState(false)
+  const [resetModal, setResetModal] = useState(false)
+
+  const aktywny = challengeState?.aktywny ?? true
+
+  const handleZapiszDate = () => {
+    if (!dataStartu) return
+    const updated = {
+      ...challengeState,
+      startDate: dataStartu,
+    }
+    zapiszChallenge(updated)
+    odswierzChallenge()
+    setSavedDate(true)
+    setTimeout(() => setSavedDate(false), 2000)
+  }
+
+  const handleToggleAktywny = () => {
+    zapiszChallenge({ ...challengeState, aktywny: !aktywny })
+    odswierzChallenge()
+  }
+
+  const handleReset = () => {
+    const nowyStart = new Date().toISOString().split('T')[0]
+    usunWszystkieDni()
+    zapiszChallenge({ startDate: nowyStart, streakCurrent: 0, streakBest: 0, aktywny: true })
+    odswierzChallenge()
+    odswierzDzien()
+    setResetModal(false)
+    navigate('/challenge')
+  }
+
+  return (
+    <div className="card p-5 mb-5">
+      <div className="flex items-center justify-between mb-5">
+        <p className="section-label mb-0">Challenge</p>
+        <button
+          onClick={handleToggleAktywny}
+          className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-lg border transition-all ${
+            aktywny
+              ? 'border-[#22D4F0]/30 text-[#22D4F0] hover:bg-[#22D4F0]/10'
+              : 'border-[#1A2535] text-[#64748B] hover:border-[#2A3B4C] hover:text-[#E2E8F0]'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${aktywny ? 'bg-[#22D4F0]' : 'bg-[#1A2535]'}`} />
+          {aktywny ? 'Włączony' : 'Wyłączony'}
+        </button>
+      </div>
+
+      {!aktywny && (
+        <p className="text-[11px] text-[#64748B] mb-5 bg-[#141921] border border-[#1A2535] rounded-lg px-3 py-2">
+          Challenge jest wyłączony — pasek statusu, streak i sekcje challengeu są ukryte.
+          Dane i historia dni zostają zachowane.
+        </p>
+      )}
+
+      <div className="mb-5">
+        <label className="label">Data startu challengeu</label>
+        <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="date"
+            value={dataStartu}
+            onChange={e => setDataStartu(e.target.value)}
+            className="input"
+            style={{ colorScheme: 'dark' }}
+          />
+          <button
+            onClick={handleZapiszDate}
+            disabled={!dataStartu}
+            className="btn-primary shrink-0 disabled:opacity-40"
+          >
+            Zapisz datę
+          </button>
+          {savedDate && (
+            <span className="text-[#10B981] text-xs font-mono">// Zapisano</span>
+          )}
+        </div>
+        <p className="text-[10px] text-[#64748B] mt-2 leading-relaxed">
+          Zmiana daty nie kasuje historii dni. Żeby zacząć od nowa — użyj przycisku Reset poniżej.
+        </p>
+      </div>
+
+      <div className="border-t border-[#1A2535] pt-4">
+        <p className="text-xs text-[#64748B] mb-3 leading-relaxed">
+          Reset usuwa wszystkie zamknięte dni, zeruje streak i ustawia datę startu na dziś.
+          Kontakty i ustawienia zostają.
+        </p>
+        <button
+          onClick={() => setResetModal(true)}
+          className="px-4 py-2 rounded-lg border border-[#EF4444]/40 text-[#EF4444] text-xs font-medium hover:bg-[#EF4444]/10 transition-all"
+        >
+          Resetuj challenge
+        </button>
+      </div>
+
+      {resetModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(5,8,16,0.85)' }}
+          onClick={e => { if (e.target === e.currentTarget) setResetModal(false) }}
+        >
+          <div className="bg-[#0F1218] border border-[#1A2535] rounded-xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <p className="text-[#E2E8F0] font-medium mb-2 text-sm">Resetuj challenge?</p>
+            <p className="text-[#64748B] text-xs mb-5 leading-relaxed">
+              Wszystkie zamknięte dni zostaną usunięte, streak wyzerowany, data startu ustawiona na dziś.
+              Twoje kontakty i ustawienia API zostają bez zmian.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setResetModal(false)}
+                className="btn-ghost text-xs px-4"
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={handleReset}
+                className="px-4 py-2 rounded-lg border border-[#EF4444]/40 bg-[#EF4444]/10 text-[#EF4444] text-xs font-medium hover:bg-[#EF4444]/20 transition-all"
+              >
+                Tak, resetuj
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function WidokUstawienia() {
   const [pitch, setPitch] = useState(loadPitch)
   const [saved, setSaved] = useState(false)
@@ -165,6 +293,7 @@ export default function WidokUstawienia() {
       </div>
 
       <SekcjaAIMentor />
+      <SekcjaChallenge />
       <GistSync />
       <div className="card p-5">
         <p className="section-label mb-5">Skrypt pitcha</p>

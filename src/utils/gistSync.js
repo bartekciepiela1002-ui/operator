@@ -1,53 +1,54 @@
 // utils/gistSync.js
-// GitHub Gist sync dla CRM — backup wszystkich kluczy crm_*
+// GitHub Gist sync dla Operator — backup kluczy operator_* (bez cache AI)
 
-const GIST_ID_KEY = 'crm_gist_id';
-const GITHUB_TOKEN_KEY = 'crm_github_token';
-const GIST_FILENAME = 'crm-salon-urody-backup.json';
+const GIST_TOKEN_KEY = 'operator_gist_token'
+const GIST_ID_KEY    = 'operator_gist_id'
+const GIST_FILENAME  = 'operator-backup.json'
+
+const WYKLUCZONE_PREFIXY = ['operator_brief_', 'operator_nudges_']
 
 export function getGithubToken() {
-  return localStorage.getItem(GITHUB_TOKEN_KEY) || '';
+  return localStorage.getItem(GIST_TOKEN_KEY) || ''
 }
 
 export function saveGithubToken(token) {
-  localStorage.setItem(GITHUB_TOKEN_KEY, token.trim());
+  localStorage.setItem(GIST_TOKEN_KEY, token.trim())
 }
 
 export function getGistId() {
-  return localStorage.getItem(GIST_ID_KEY) || '';
+  return localStorage.getItem(GIST_ID_KEY) || ''
 }
 
-// Zbiera wszystkie klucze crm_* z localStorage (oprócz tokenu i gist id)
-function zbierzDaneCRM() {
-  const dane = {};
+function zbierzDane() {
+  const dane = {}
   for (const key of Object.keys(localStorage)) {
-    if (key.startsWith('crm_') && key !== GITHUB_TOKEN_KEY && key !== GIST_ID_KEY) {
-      dane[key] = localStorage.getItem(key);
-    }
+    if (!key.startsWith('operator_')) continue
+    if (key === GIST_TOKEN_KEY || key === GIST_ID_KEY) continue
+    if (WYKLUCZONE_PREFIXY.some(p => key.startsWith(p))) continue
+    dane[key] = localStorage.getItem(key)
   }
-  return dane;
+  return dane
 }
 
-// Zapisuje dane do GitHub Gist (tworzy nowy lub aktualizuje istniejący)
 export async function zapiszNaGista() {
-  const token = getGithubToken();
-  if (!token) throw new Error('Brak tokenu GitHub. Dodaj go w Ustawieniach.');
+  const token = getGithubToken()
+  if (!token) throw new Error('Brak tokenu GitHub. Dodaj go w Ustawieniach.')
 
-  const dane = zbierzDaneCRM();
+  const dane = zbierzDane()
   const liczbaKontaktow = (() => {
     try {
-      return JSON.parse(dane['crm_kontakty'] || '[]').length;
+      return JSON.parse(dane['operator_contacts'] || '[]').length
     } catch {
-      return 0;
+      return 0
     }
-  })();
+  })()
 
   const payload = {
-    opis: `CRM Salon Urody — backup ${new Date().toLocaleString('pl-PL')} — ${liczbaKontaktow} kontaktów`,
+    opis: `Operator — backup ${new Date().toLocaleString('pl-PL')} — ${liczbaKontaktow} kontaktów`,
     dane,
-    wersja: '1.0',
+    wersja: '2.0',
     dataBackupu: new Date().toISOString(),
-  };
+  }
 
   const gistBody = {
     description: payload.opis,
@@ -57,13 +58,11 @@ export async function zapiszNaGista() {
         content: JSON.stringify(payload, null, 2),
       },
     },
-  };
+  }
 
-  const gistId = getGistId();
-  const url = gistId
-    ? `https://api.github.com/gists/${gistId}`
-    : 'https://api.github.com/gists';
-  const method = gistId ? 'PATCH' : 'POST';
+  const gistId = getGistId()
+  const url    = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists'
+  const method = gistId ? 'PATCH' : 'POST'
 
   const res = await fetch(url, {
     method,
@@ -73,65 +72,62 @@ export async function zapiszNaGista() {
       Accept: 'application/vnd.github+json',
     },
     body: JSON.stringify(gistBody),
-  });
+  })
 
-  if (res.status === 401) throw new Error('Token GitHub nieprawidłowy lub wygasł.');
-  if (!res.ok) throw new Error(`Błąd GitHub API: ${res.status}`);
+  if (res.status === 401) throw new Error('Token GitHub nieprawidłowy lub wygasł.')
+  if (!res.ok) throw new Error(`Błąd GitHub API: ${res.status}`)
 
-  const json = await res.json();
-
-  // Przy pierwszym zapisie zapamiętaj ID Gista
-  if (!gistId) {
-    localStorage.setItem(GIST_ID_KEY, json.id);
-  }
+  const json = await res.json()
+  if (!gistId) localStorage.setItem(GIST_ID_KEY, json.id)
 
   return {
     gistId: json.id,
     url: json.html_url,
     liczbaKontaktow,
     dataBackupu: payload.dataBackupu,
-  };
+  }
 }
 
-// Wczytuje dane z GitHub Gist i przywraca do localStorage
 export async function przywrocZGista() {
-  const token = getGithubToken();
-  if (!token) throw new Error('Brak tokenu GitHub. Dodaj go w Ustawieniach.');
+  const token = getGithubToken()
+  if (!token) throw new Error('Brak tokenu GitHub. Dodaj go w Ustawieniach.')
 
-  const gistId = getGistId();
-  if (!gistId) throw new Error('Brak ID Gista. Wykonaj najpierw zapis.');
+  const gistId = getGistId()
+  if (!gistId) throw new Error('Brak ID Gista. Wykonaj najpierw zapis.')
 
   const res = await fetch(`https://api.github.com/gists/${gistId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
     },
-  });
+  })
 
-  if (res.status === 401) throw new Error('Token GitHub nieprawidłowy lub wygasł.');
-  if (res.status === 404) throw new Error('Gist nie istnieje. Może został usunięty.');
-  if (!res.ok) throw new Error(`Błąd GitHub API: ${res.status}`);
+  if (res.status === 401) throw new Error('Token GitHub nieprawidłowy lub wygasł.')
+  if (res.status === 404) throw new Error('Gist nie istnieje. Może został usunięty.')
+  if (!res.ok) throw new Error(`Błąd GitHub API: ${res.status}`)
 
-  const gistJson = await res.json();
-  const plik = gistJson.files?.[GIST_FILENAME];
-  if (!plik) throw new Error(`Plik ${GIST_FILENAME} nie znaleziony w Gist.`);
+  const gistJson = await res.json()
 
-  // Pobierz pełną treść jeśli została obcięta
-  let zawartosc = plik.content;
+  // Obsługuj stary (crm-salon-urody-backup.json) i nowy (operator-backup.json) filename
+  const plik = gistJson.files?.[GIST_FILENAME]
+    || gistJson.files?.['crm-salon-urody-backup.json']
+  if (!plik) throw new Error('Plik backup nie znaleziony w Gist.')
+
+  let zawartosc = plik.content
   if (plik.truncated) {
-    const rawRes = await fetch(plik.raw_url);
-    zawartosc = await rawRes.text();
+    const rawRes = await fetch(plik.raw_url)
+    zawartosc = await rawRes.text()
   }
 
-  const payload = JSON.parse(zawartosc);
-  if (!payload.dane) throw new Error('Nieprawidłowy format pliku backup.');
+  const payload = JSON.parse(zawartosc)
+  if (!payload.dane) throw new Error('Nieprawidłowy format pliku backup.')
 
-  // Przywróć wszystkie klucze crm_*
-  let licznik = 0;
+  let licznik = 0
   for (const [key, value] of Object.entries(payload.dane)) {
-    if (key.startsWith('crm_')) {
-      localStorage.setItem(key, value);
-      licznik++;
+    // Akceptuj klucze operator_* (nowy format) i crm_* (stary format)
+    if (key.startsWith('operator_') || key.startsWith('crm_')) {
+      localStorage.setItem(key, value)
+      licznik++
     }
   }
 
@@ -139,25 +135,25 @@ export async function przywrocZGista() {
     liczbaKluczy: licznik,
     liczbaKontaktow: (() => {
       try {
-        return JSON.parse(payload.dane['crm_kontakty'] || '[]').length;
+        const k = payload.dane['operator_contacts'] || payload.dane['crm_kontakty'] || '[]'
+        return JSON.parse(k).length
       } catch {
-        return 0;
+        return 0
       }
     })(),
     dataBackupu: payload.dataBackupu,
-  };
+  }
 }
 
-// Testuje token bez zapisywania danych
 export async function testujToken(token) {
   const res = await fetch('https://api.github.com/user', {
     headers: {
       Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github+json',
     },
-  });
-  if (res.status === 401) throw new Error('Token nieprawidłowy.');
-  if (!res.ok) throw new Error(`Błąd: ${res.status}`);
-  const user = await res.json();
-  return user.login; // zwraca nazwę użytkownika GitHub
+  })
+  if (res.status === 401) throw new Error('Token nieprawidłowy.')
+  if (!res.ok) throw new Error(`Błąd: ${res.status}`)
+  const user = await res.json()
+  return user.login
 }

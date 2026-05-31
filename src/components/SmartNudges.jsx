@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { zapytajMentoraZKontekstem } from '../utils/mentor'
-import { wczytajKontakty } from '../utils/storage'
+import { wczytajKontakty, wczytajUstawienia } from '../utils/storage'
 import { getDzisiajLokalnie } from '../utils/helpers'
 
 const PROMPT_NUDGES = `
@@ -74,7 +74,10 @@ function obliczNudgeStatyczne(kontakty) {
     String(wczoraj.getMonth()+1).padStart(2,'0'),
     String(wczoraj.getDate()).padStart(2,'0')
   ].join('-')
-  if (!localStorage.getItem(`crm_sprint_${wczorajStr}`)) {
+  const wczorajRecord = (() => {
+    try { return JSON.parse(localStorage.getItem(`operator_day_${wczorajStr}`)) } catch { return null }
+  })()
+  if (!wczorajRecord || (wczorajRecord.sprintWykonano || 0) === 0) {
     nudges.push({
       typ: 'info',
       tresc: 'Wczoraj nie było sprintu. Zacznij dziś żeby odbudować rytm.'
@@ -147,8 +150,8 @@ export default function SmartNudges() {
   const [zrodlo, setZrodlo] = useState(null) // 'ai' | 'static'
   const navigate = useNavigate()
 
-  const cacheKey = `crm_nudges_${getDzisiajLokalnie()}`
-  const maKlucz = Boolean(localStorage.getItem('crm_anthropic_key'))
+  const cacheKey = `operator_nudges_${getDzisiajLokalnie()}`
+  const maKlucz = Boolean(wczytajUstawienia().anthropicKey)
 
   useEffect(() => {
     if (maKlucz) {

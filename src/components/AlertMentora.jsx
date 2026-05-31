@@ -1,8 +1,9 @@
 import { useNavigate } from 'react-router-dom'
+import { wczytajUstawienia } from '../utils/storage'
 
 export default function AlertMentora() {
   const navigate = useNavigate()
-  const maKlucz = Boolean(localStorage.getItem('crm_anthropic_key'))
+  const maKlucz = Boolean(wczytajUstawienia().anthropicKey)
 
   if (maKlucz) return null
 
@@ -14,11 +15,11 @@ export default function AlertMentora() {
         border: '1px solid #F59E0B',
         borderRadius: 8,
         padding: '10px 16px',
-        color: '#F59E0B'
+        color: '#F59E0B',
       }}
     >
       <span>
-        AI Mentor nieaktywny — dodaj klucz API w Ustawieniach aby odblokować inteligentne briefy, alerty i misje.
+        AI Mentor nieaktywny — dodaj klucz API w Ustawieniach aby odblokować inteligentne briefy i alerty.
       </span>
       <button
         onClick={() => navigate('/ustawienia')}

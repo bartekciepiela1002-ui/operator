@@ -1,27 +1,24 @@
-import { createContext, useContext, useState, useCallback } from 'react'
-import { getTodaySprint, incrementSprintStorage } from '../utils/sprint'
+import { useOperator } from './OperatorContext'
 
-const SprintCtx = createContext(null)
-
+// Thin wrapper — existing views import useSprint() without changes
 export function SprintProvider({ children }) {
-  const [sprintDzis, setSprintDzis] = useState(() => getTodaySprint())
-  const [focusModeOpen, setFocusModeOpen] = useState(false)
-
-  const odswierzSprint = useCallback(() => {
-    setSprintDzis(getTodaySprint())
-  }, [])
-
-  const inkrementuj = useCallback(() => {
-    const updated = incrementSprintStorage()
-    if (updated) setSprintDzis(updated)
-    return updated
-  }, [])
-
-  return (
-    <SprintCtx.Provider value={{ sprintDzis, odswierzSprint, inkrementuj, focusModeOpen, setFocusModeOpen }}>
-      {children}
-    </SprintCtx.Provider>
-  )
+  return children
 }
 
-export const useSprint = () => useContext(SprintCtx)
+export const useSprint = () => {
+  const {
+    dzisiejszyDzien,
+    odswierzDzien,
+    inkrementujSprint,
+    focusModeOpen,
+    setFocusModeOpen,
+  } = useOperator()
+
+  return {
+    sprintDzis: dzisiejszyDzien,
+    odswierzSprint: odswierzDzien,
+    inkrementuj: inkrementujSprint,
+    focusModeOpen,
+    setFocusModeOpen,
+  }
+}

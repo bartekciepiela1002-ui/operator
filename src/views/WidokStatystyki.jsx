@@ -1,7 +1,10 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useKontakty } from '../context/KontaktyContext'
+import { useOperator } from '../context/OperatorContext'
 import { STATUS_LABELS, POWOD_LABELS, ZRODLO_LABELS, daysDiff } from '../utils/helpers'
+import { wczytajWszystkieDni } from '../utils/storage'
+import { obliczWdrozeniaKwalifikowane, obliczSprzedaz, computeStreak } from '../utils/rules'
 
 const PIPELINE_STATUSY = [
   'do_zadzwonienia',
@@ -46,6 +49,13 @@ function BarChart({ items, colorClass = 'bg-[#22D4F0]' }) {
   )
 }
 
+const STATUS_BADGE = {
+  zaliczony:      <span className="text-[10px] font-mono text-[#10B981]">✓ zal.</span>,
+  mocno_zaliczony:<span className="text-[10px] font-mono text-[#22D4F0]">★ mocno</span>,
+  urlopowy:       <span className="text-[10px] font-mono text-[#94A3B8]">○ urlop</span>,
+  niezaliczony:   <span className="text-[10px] font-mono text-[#EF4444]">✗ nie</span>,
+}
+
 function KartaStat({ label, val, sub, colorStyle = '#E2E8F0' }) {
   return (
     <div className="card p-5">
@@ -58,6 +68,7 @@ function KartaStat({ label, val, sub, colorStyle = '#E2E8F0' }) {
 
 export default function WidokStatystyki() {
   const { kontakty } = useKontakty()
+  const { challengeState } = useOperator()
   const navigate = useNavigate()
 
   const stats = useMemo(() => {
@@ -129,6 +140,41 @@ export default function WidokStatystyki() {
   const konwersja = kontakty.length > 0
     ? Math.round((stats.wygrane.length / kontakty.length) * 100)
     : 0
+
+  const cStats = useMemo(() => {
+    const days = wczytajWszystkieDni()
+    const wdrozenia = obliczWdrozeniaKwalifikowane(kontakty)
+    const sprzedaz = obliczSprzedaz(kontakty)
+    const { current: streak, best: streakBest } = computeStreak(days, challengeState || {})
+    const evaluated = days.filter(d => d.status !== null)
+    const zaliczone = evaluated.filter(d =>
+      ['zaliczony', 'mocno_zaliczony', 'urlopowy'].includes(d.status)
+    ).length
+    const pctZaliczone = evaluated.length > 0
+      ? Math.round(zaliczone / evaluated.length * 100)
+      : 0
+    const rozkład = {
+      mocno_zaliczony: days.filter(d => d.status === 'mocno_zaliczony').length,
+      zaliczony:       days.filter(d => d.status === 'zaliczony').length,
+      urlopowy:        days.filter(d => d.status === 'urlopowy').length,
+      niezaliczony:    days.filter(d => d.status === 'niezaliczony').length,
+    }
+    const ostatnie14 = []
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      const dateStr = d.toISOString().split('T')[0]
+      const day = days.find(x => x.date === dateStr)
+      ostatnie14.push({
+        date: dateStr,
+        label: d.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric' }),
+        sprint: day?.sprintWykonano ?? null,
+        pracaMin: day?.pracaWlasciwaMin ?? null,
+        status: day?.status ?? null,
+      })
+    }
+    return { wdrozenia, sprzedaz, streak, streakBest, totalDni: evaluated.length, zaliczone, pctZaliczone, rozkład, ostatnie14 }
+  }, [kontakty, challengeState])
 
   return (
     <div className="max-w-4xl">
@@ -226,6 +272,123 @@ export default function WidokStatystyki() {
           </div>
         </div>
       </div>
+
+      {/* ── Sekcja Challenge ── */}
+      {(challengeState?.aktywny ?? true) && <div className="mt-8">
+        <p className="section-label mb-5">CHALLENGE — CEL KAMPANII</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+          {/* Wdrożenia */}
+          <div className="card p-5">
+            <div
+              className="font-mono text-3xl font-bold animate-entry"
+              style={{ color: cStats.wdrozenia >= 3 ? '#10B981' : '#22D4F0' }}
+            >
+              {cStats.wdrozenia}<span className="text-[#64748B] text-xl">/3</span>
+            </div>
+            <div className="text-xs text-[#64748B] mt-1">Wdrożenia ≥ 5 000 zł</div>
+            <div className="mt-3 h-1.5 bg-[#141921] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(cStats.wdrozenia / 3 * 100, 100)}%`,
+                  background: cStats.wdrozenia >= 3 ? '#10B981' : '#22D4F0',
+                }}
+              />
+            </div>
+            {cStats.wdrozenia >= 3
+              ? <p className="text-[10px] text-[#10B981] mt-1.5">Cel osiągnięty!</p>
+              : <p className="text-[10px] text-[#64748B] mt-1.5">brakuje {3 - cStats.wdrozenia}</p>
+            }
+          </div>
+
+          {/* Sprzedaż */}
+          <div className="card p-5">
+            <div className="font-mono text-3xl font-bold animate-entry text-[#E2E8F0]">
+              {cStats.sprzedaz >= 1000
+                ? `${(cStats.sprzedaz / 1000).toFixed(1)}k`
+                : cStats.sprzedaz
+              }
+              <span className="text-[#64748B] text-xl"> zł</span>
+            </div>
+            <div className="text-xs text-[#64748B] mt-1">Sprzedaż · cel 15 000 zł</div>
+            <div className="mt-3 h-1.5 bg-[#141921] rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${Math.min(cStats.sprzedaz / 15000 * 100, 100)}%`,
+                  background: cStats.sprzedaz >= 15000 ? '#10B981' : '#22D4F0',
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-[#64748B] mt-1.5">
+              {Math.round(cStats.sprzedaz / 15000 * 100)}% celu
+            </p>
+          </div>
+
+          {/* Efektywność dni */}
+          <div className="card p-5">
+            <div className="font-mono text-3xl font-bold animate-entry text-[#22D4F0]">
+              {cStats.pctZaliczone}<span className="text-[#64748B] text-xl">%</span>
+            </div>
+            <div className="text-xs text-[#64748B] mt-1">
+              Dni zaliczone · 🔥 streak {cStats.streak}
+            </div>
+            <div className="flex gap-3 mt-3 text-[10px] font-mono flex-wrap">
+              <span className="text-[#22D4F0]">★ {cStats.rozkład.mocno_zaliczony}</span>
+              <span className="text-[#10B981]">✓ {cStats.rozkład.zaliczony}</span>
+              <span className="text-[#94A3B8]">○ {cStats.rozkład.urlopowy}</span>
+              <span className="text-[#EF4444]">✗ {cStats.rozkład.niezaliczony}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Aktywność CRM vs ocena dnia */}
+        <div className="card p-5">
+          <p className="section-label mb-4">Aktywność CRM vs ocena dnia — ostatnie 14 dni</p>
+          {challengeState?.startDate ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-collapse">
+                <thead>
+                  <tr className="text-[#64748B] text-[10px] uppercase tracking-wider">
+                    <th className="text-left pb-2 font-medium">Dzień</th>
+                    <th className="text-right pb-2 font-medium pr-6">Telefony</th>
+                    <th className="text-right pb-2 font-medium pr-6">Praca</th>
+                    <th className="text-right pb-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cStats.ostatnie14.map(({ date, label, sprint, pracaMin, status }) => (
+                    <tr key={date} className="border-t border-[#141921] hover:bg-[#0C1520] transition-colors">
+                      <td className="py-1.5 text-[#64748B] font-mono text-[11px]">{label}</td>
+                      <td className="py-1.5 text-right pr-6 font-mono text-[11px]">
+                        {sprint !== null
+                          ? <span style={{ color: sprint > 0 ? '#22D4F0' : '#EF4444' }}>{sprint}</span>
+                          : <span className="text-[#1A2535]">—</span>
+                        }
+                      </td>
+                      <td className="py-1.5 text-right pr-6 font-mono text-[11px] text-[#64748B]">
+                        {pracaMin !== null
+                          ? `${Math.round(pracaMin)} min`
+                          : <span className="text-[#1A2535]">—</span>
+                        }
+                      </td>
+                      <td className="py-1.5 text-right">
+                        {STATUS_BADGE[status] ?? <span className="text-[#1A2535] text-[10px]">—</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-[#64748B] text-xs">
+              Challenge nie wystartowany — ustaw datę startu w{' '}
+              <a href="/ustawienia" className="text-[#22D4F0] hover:underline">Ustawieniach</a>.
+            </p>
+          )}
+        </div>
+      </div>}
 
       {/* Tracker objekcji */}
       <div className="mt-8">
