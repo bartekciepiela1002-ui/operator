@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useKontakty } from '../context/KontaktyContext'
 import StatusBadge from '../components/StatusBadge'
 import { formatDate, STATUS_LABELS, ZRODLO_LABELS, BRANZA_LABELS } from '../utils/helpers'
-import { archiwizujKontakt } from '../utils/storage'
+import { archiwizujKontakt, usunKontakt } from '../utils/storage'
 
 const STATUSY_OPCJE = Object.entries(STATUS_LABELS).filter(([s]) => s !== 'archiwum')
 
@@ -26,7 +26,7 @@ export default function WidokLista() {
 
   const [filtry, setFiltry] = useState({ statusy: [], miasta: [], branze: [], szukaj: '' })
   const [zaznaczone, setZaznaczone] = useState(new Set())
-  const [potwierdzUsun, setPotwierdzUsun] = useState(false)
+  const [potwierdzUsun, setPotwierdzUsun] = useState(false)   // 'archiwum' | 'trwale' | false
 
   const miasta = useMemo(
     () => [...new Set(kontakty.map(k => k.miasto).filter(Boolean))].sort(),
@@ -88,8 +88,16 @@ export default function WidokLista() {
   }
 
   const handleArchiwizuj = () => {
-    if (!potwierdzUsun) { setPotwierdzUsun(true); return }
+    if (potwierdzUsun !== 'archiwum') { setPotwierdzUsun('archiwum'); return }
     zaznaczone.forEach(id => archiwizujKontakt(id))
+    odswierz()
+    setZaznaczone(new Set())
+    setPotwierdzUsun(false)
+  }
+
+  const handleUsunTrwale = () => {
+    if (potwierdzUsun !== 'trwale') { setPotwierdzUsun('trwale'); return }
+    zaznaczone.forEach(id => usunKontakt(id))
     odswierz()
     setZaznaczone(new Set())
     setPotwierdzUsun(false)
@@ -174,35 +182,36 @@ export default function WidokLista() {
             Zaznaczono <span className="text-[#E2E8F0] font-mono">{zaznaczone.size}</span>
           </span>
           <div className="flex items-center gap-2 ml-auto">
-            {potwierdzUsun ? (
+            {potwierdzUsun === 'archiwum' ? (
               <>
-                <span className="text-xs text-[#F59E0B]">Na pewno archiwizować {zaznaczone.size} kontaktów?</span>
-                <button
-                  onClick={handleArchiwizuj}
-                  className="text-xs px-3 py-1 rounded border border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 transition-all"
-                >
+                <span className="text-xs text-[#F59E0B]">Archiwizować {zaznaczone.size} kontaktów?</span>
+                <button onClick={handleArchiwizuj} className="text-xs px-3 py-1 rounded border border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 transition-all">
                   Tak, archiwizuj
                 </button>
-                <button
-                  onClick={anulujUsun}
-                  className="text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors"
-                >
+                <button onClick={anulujUsun} className="text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
+                  Anuluj
+                </button>
+              </>
+            ) : potwierdzUsun === 'trwale' ? (
+              <>
+                <span className="text-xs text-[#EF4444]">Trwale usunąć {zaznaczone.size} kontaktów? Tego nie cofniesz.</span>
+                <button onClick={handleUsunTrwale} className="text-xs px-3 py-1 rounded bg-[#EF4444]/20 border border-[#EF4444]/60 text-[#EF4444] hover:bg-[#EF4444]/30 transition-all font-medium">
+                  Tak, usuń na zawsze
+                </button>
+                <button onClick={anulujUsun} className="text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
                   Anuluj
                 </button>
               </>
             ) : (
               <>
-                <button
-                  onClick={() => setZaznaczone(new Set())}
-                  className="text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors"
-                >
+                <button onClick={() => setZaznaczone(new Set())} className="text-xs text-[#64748B] hover:text-[#E2E8F0] transition-colors">
                   Odznacz
                 </button>
-                <button
-                  onClick={handleArchiwizuj}
-                  className="text-xs px-3 py-1 rounded border border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 transition-all"
-                >
-                  Archiwizuj zaznaczone
+                <button onClick={handleArchiwizuj} className="text-xs px-3 py-1 rounded border border-[#1A2535] text-[#64748B] hover:border-[#EF4444]/40 hover:text-[#EF4444] transition-all">
+                  Archiwizuj
+                </button>
+                <button onClick={handleUsunTrwale} className="text-xs px-3 py-1 rounded border border-[#EF4444]/40 text-[#EF4444] hover:bg-[#EF4444]/10 transition-all">
+                  Usuń trwale
                 </button>
               </>
             )}
