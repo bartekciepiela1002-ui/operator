@@ -90,7 +90,10 @@ export default function FocusMode({ onClose }) {
         !pominiete.includes(k.id)
       )
       .sort((a, b) => {
-        // Sortuj po dacie utworzenia rosnąco — Tier A (importowany pierwszy) na górze
+        // Najpierw firmy bez strony, potem po dacie utworzenia (najstarszy import pierwszy)
+        const wwwA = a.www ? 1 : 0
+        const wwwB = b.www ? 1 : 0
+        if (wwwA !== wwwB) return wwwA - wwwB
         const da = a.dataUtworzenia || '2000-01-01T00:00:00.000Z'
         const db = b.dataUtworzenia || '2000-01-01T00:00:00.000Z'
         return da.localeCompare(db)
