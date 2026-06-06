@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useKontakty } from '../context/KontaktyContext'
 import { useSprint } from '../context/SprintContext'
 import { edytujKontakt, archiwizujKontakt } from '../utils/storage'
-import { today, POWOD_LABELS } from '../utils/helpers'
+import { today, POWOD_LABELS, BRANZA_LABELS } from '../utils/helpers'
 import { loadPitch } from '../views/WidokUstawienia'
 
 function PitchPanel() {
@@ -199,25 +199,67 @@ export default function FocusMode({ onClose }) {
         <div className="mb-6">
           <h2 className="text-xl font-semibold text-[#E2E8F0] leading-tight">{kontakt.imie || kontakt.nazwaSlonu}</h2>
           {kontakt.imie && <p className="text-[#64748B] text-sm mt-0.5">{kontakt.nazwaSlonu}</p>}
-          {kontakt.miasto && <p className="text-[#64748B] text-xs mt-0.5">{kontakt.miasto}</p>}
+
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            {kontakt.miasto && (
+              <span className="text-[#64748B] text-xs">{kontakt.miasto}</span>
+            )}
+            {kontakt.branża && (
+              <>
+                {kontakt.miasto && <span className="text-[#1A2535] text-xs">·</span>}
+                <span className="text-[#64748B] text-xs">{BRANZA_LABELS[kontakt.branża] ?? kontakt.branża}</span>
+              </>
+            )}
+          </div>
 
           <a
             href={`tel:${kontakt.telefon}`}
-            className="block font-mono font-bold mt-4 mb-2 hover:brightness-110 transition-all"
+            className="block font-mono font-bold mt-4 hover:brightness-110 transition-all"
             style={{ fontSize: '28px', lineHeight: 1, color: '#22D4F0' }}
           >
             {kontakt.telefon}
           </a>
 
-          {kontakt.www && (
-            <p className="text-[#64748B] text-xs mt-1 break-all">{kontakt.www}</p>
-          )}
+          {/* Tagi informacyjne */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            {/* Strona WWW */}
+            {kontakt.www ? (
+              <a
+                href={kontakt.www.startsWith('http') ? kontakt.www : `https://${kontakt.www}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded border transition-all hover:brightness-110"
+                style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.3)', color: '#10B981' }}
+              >
+                🌐 Ma stronę →
+              </a>
+            ) : (
+              <span
+                className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded border"
+                style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', color: '#EF4444' }}
+              >
+                ✕ Brak strony
+              </span>
+            )}
 
-          {kontakt.tor === 'nie_odbiera' && (
-            <span className="text-[10px] font-mono bg-[#141921] text-[#F59E0B] px-2 py-0.5 rounded">
-              Próba {kontakt.licznikTel + 1}/6
-            </span>
-          )}
+            {/* Próby kontaktu */}
+            {kontakt.tor === 'nie_odbiera' ? (
+              <span
+                className="text-[11px] font-mono px-2.5 py-1 rounded border"
+                style={{ background: '#141921', border: '1px solid rgba(245,158,11,0.3)', color: '#F59E0B' }}
+              >
+                Próba {kontakt.licznikTel + 1}/6
+              </span>
+            ) : kontakt.licznikTel > 0 ? (
+              <span
+                className="text-[11px] font-mono px-2.5 py-1 rounded border"
+                style={{ background: '#141921', border: '1px solid #1A2535', color: '#64748B' }}
+              >
+                {kontakt.licznikTel} prób wcześniej
+              </span>
+            ) : null}
+          </div>
         </div>
 
         {/* Ostatnia notatka */}
