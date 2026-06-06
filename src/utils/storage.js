@@ -22,6 +22,7 @@ const nowyKontakt = (dane) => ({
   imie: '',
   telefon: '',
   miasto: '',
+  branża: null,
   www: '',
   zrodlo: 'inne',
   status: 'do_zadzwonienia',

@@ -2,13 +2,14 @@ import { useState } from 'react'
 import Modal from '../Modal'
 import { dodajKontakt, edytujKontakt } from '../../utils/storage'
 import { useKontakty } from '../../context/KontaktyContext'
-import { ZRODLO_LABELS, PORA_LABELS } from '../../utils/helpers'
+import { ZRODLO_LABELS, PORA_LABELS, BRANZA_LABELS } from '../../utils/helpers'
 
 const PUSTE = {
   nazwaSlonu: '',
   imie: '',
   telefon: '',
   miasto: '',
+  branża: '',
   www: '',
   zrodlo: 'google_maps',
   poraDnia: '',
@@ -26,6 +27,7 @@ export default function ModalDodajKontakt({ onClose, kontaktPoczatkowy }) {
           imie: kontaktPoczatkowy.imie || '',
           telefon: kontaktPoczatkowy.telefon || '',
           miasto: kontaktPoczatkowy.miasto || '',
+          branża: kontaktPoczatkowy.branża || '',
           www: kontaktPoczatkowy.www || '',
           zrodlo: kontaktPoczatkowy.zrodlo || 'google_maps',
           poraDnia: kontaktPoczatkowy.poraDnia || '',
@@ -92,6 +94,21 @@ export default function ModalDodajKontakt({ onClose, kontaktPoczatkowy }) {
         {pole('Imię właścicielki', 'imie')}
         {pole('Telefon', 'telefon', 'tel', true)}
         {pole('Miasto', 'miasto')}
+
+        <div>
+          <label className="label">Branża</label>
+          <select
+            value={dane.branża}
+            onChange={e => set('branża', e.target.value)}
+            className="input"
+          >
+            <option value="">Nie określono</option>
+            {Object.entries(BRANZA_LABELS).map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </div>
+
         {pole('Strona WWW', 'www', 'url')}
 
         <div>

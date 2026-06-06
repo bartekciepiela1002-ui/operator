@@ -83,6 +83,16 @@ export const PORA_LABELS = {
   po17: 'Po 17:00'
 }
 
+export const BRANZA_LABELS = {
+  fryzjerski:  'Fryzjerski',
+  kosmetyczny: 'Kosmetyczny',
+  paznokcie:   'Paznokcie',
+  spa_masaz:   'SPA / Masaż',
+  barber:      'Barber',
+  medycyna_es: 'Medycyna estetyczna',
+  inne:        'Inne',
+}
+
 export const KANBAN_STATUSY = [
   'do_zadzwonienia',
   'proby_kontaktu',
